@@ -1,21 +1,39 @@
-# Node.js with React
-# Build a Node.js project that uses React.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureWebAppName: 'db'
+  resourceGroup: 'db_group'
 
 steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
+# 1. Checkout code
+- checkout: self
+
+# 2. Install Node.js
+- script: |
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    node -v
+    npm -v
   displayName: 'Install Node.js'
 
+# 3. Install backend dependencies
 - script: |
+    cd backend
     npm install
-    npm run build
-  displayName: 'npm install and build'
+  displayName: 'Install backend dependencies'
+
+# 4. Copy everything from backend to artifact staging
+- script: |
+    mkdir -p $(Build.ArtifactStagingDirectory)/backend
+    cp -r backend/* $(Build.ArtifactStagingDirectory)/backend/
+  displayName: 'Prepare backend artifact'
+
+# 5. Publish artifact
+- publish: $(Build.ArtifactStagingDirectory)/backend
+  artifact: backend
