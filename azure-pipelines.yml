@@ -1,0 +1,52 @@
+# File: azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Azure App Service name
+  azureWebAppName: 'db'
+  # Resource group of the App Service
+  resourceGroup: 'db_group'
+  # Node.js version
+  nodeVersion: '20.x'
+
+steps:
+# 1. Checkout code
+- task: Checkout@1
+
+# 2. Install Node.js
+- task: NodeTool@0
+  inputs:
+    versionSpec: '$(nodeVersion)'
+  displayName: 'Install Node.js'
+
+# 3. Install backend dependencies
+- script: |
+    cd backend
+    npm install
+  displayName: 'Install backend dependencies'
+
+# 4. Install frontend dependencies and build React
+- script: |
+    cd frontend
+    npm install
+    npm run build
+  displayName: 'Install frontend dependencies and build React'
+
+# 5. Copy React build into backend wwwroot (for Azure App Service)
+- script: |
+    cp -r frontend/build/* backend/wwwroot/
+  displayName: 'Copy frontend build to backend'
+
+# 6. Deploy backend (with frontend) to Azure App Service
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: '<YOUR-AZURE-SERVICE-CONNECTION>'
+    appName: '$(azureWebAppName)'
+    package: 'backend'
+  displayName: 'Deploy backend + frontend to Azure App Service'
