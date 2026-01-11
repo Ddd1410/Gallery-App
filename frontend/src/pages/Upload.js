@@ -37,7 +37,7 @@ const Upload = ({ apiKey, role }) => {
     formData.append("caption", caption);
 
     try {
-      const res = await fetch(`${API_URL}/photos`, {
+      const res = await fetch(`${API_URL}/api/photos`, {
         method: "POST",
         body: formData,
         headers: { "x-api-key": apiKey },
