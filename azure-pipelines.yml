@@ -1,54 +1,20 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
 trigger:
-  - main
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
-
-# Link your variable group
-variables:
-- group: gallery-app-secrets
+  vmImage: ubuntu-latest
 
 steps:
-  # Install Node
-  - task: NodeTool@0
-    inputs:
-      versionSpec: '18.x'
-    displayName: 'Use Node.js 18'
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
 
-  # Install backend dependencies
-  - script: |
-      cd backend
-      npm install
-    displayName: 'Install backend dependencies'
-
-  # Install frontend dependencies + build
-  - script: |
-      cd frontend
-      npm install
-      npm run build
-    displayName: 'Build frontend'
-
-  # Archive frontend build output
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: 'frontend/build'
-      includeRootFolder: false
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
-    displayName: 'Archive frontend build'
-
-  # Archive backend
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: 'backend'
-      includeRootFolder: false
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
-    displayName: 'Archive backend'
-
-  # Publish artifacts
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'drop'
-    displayName: 'Publish artifacts'
+- script: |
+    echo Add other tasks to build, test, and deploy your project.
+    echo See https://aka.ms/yaml
+  displayName: 'Run a multi-line script'
+this is my pipleline rn
