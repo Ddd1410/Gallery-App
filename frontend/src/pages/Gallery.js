@@ -54,7 +54,7 @@ const Gallery = ({ role, apiKey, resetSignal }) => {
 
     try {
       const res = await fetch(
-        `${API_URL}/search?q=${encodeURIComponent(search.trim())}`
+        `${API_URL}/api/search?q=${encodeURIComponent(search.trim())}`
       );
       const data = await res.json();
       setImages(data.results || []);
