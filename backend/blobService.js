@@ -1,36 +1,75 @@
-require("dotenv").config();
-const { BlobServiceClient } = require("@azure/storage-blob");
+// cosmosServis.js
+const { CosmosClient } = require("@azure/cosmos");
 
-// Read connection string from .env
-const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+// ✅ Environment variables (must match Azure App Service and .env)
+const endpoint = process.env.COSMOS_DB_ENDPOINT;
+const key = process.env.COSMOS_DB_KEY;
+const databaseName = process.env.COSMOS_DB_NAME;          // FIXED
+const containerName = process.env.COSMOS_CONTAINER_NAME;  // FIXED
 
-if (!connectionString) {
-  throw new Error("AZURE_STORAGE_CONNECTION_STRING is not defined in .env");
+// ✅ Debug logs to confirm values during deployment
+console.log("Cosmos DB Endpoint:", endpoint);
+console.log("Cosmos DB Database:", databaseName);
+console.log("Cosmos DB Container:", containerName);
+
+// ✅ Initialize Cosmos client
+const client = new CosmosClient({ endpoint, key });
+const database = client.database(databaseName);
+const container = database.container(containerName);
+
+// ✅ Add metadata (image or video)
+async function addImage(data) {
+  if (!data.uploadedAt) {
+    data.uploadedAt = new Date().toISOString();
+  }
+
+  console.log("Saving item to Cosmos DB...");
+  const { resource } = await container.items.create(data);
+  return resource;
 }
 
-// Create Blob service client
-const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
-const containerName = "images";
-
-// Upload a file to Azure Blob
-async function uploadFile(file) {
-  const containerClient = blobServiceClient.getContainerClient(containerName);
-
-  const fileName = `${Date.now()}-${file.originalname}`;
-  const blockBlobClient = containerClient.getBlockBlobClient(fileName);
-
-  await blockBlobClient.uploadData(file.buffer, {
-    blobHTTPHeaders: { blobContentType: file.mimetype },
-  });
-
-  return blockBlobClient.url;
+// ✅ List all items
+async function listImages() {
+  const query = "SELECT * FROM c ORDER BY c.uploadedAt DESC";
+  const { resources } = await container.items.query(query).fetchAll();
+  return resources;
 }
 
-// Delete a blob by name
-async function deleteImage(blobName) {
-  const containerClient = blobServiceClient.getContainerClient(containerName);
-  const blobClient = containerClient.getBlockBlobClient(blobName);
-  await blobClient.deleteIfExists();
+// ✅ Get single item by ID
+async function getImageById(id) {
+  try {
+    const { resource } = await container.item(id, id).read();
+    return resource || null;
+  } catch (err) {
+    if (err.code === 404) return null;
+    throw err;
+  }
 }
 
-module.exports = { uploadFile, deleteImage };
+// ✅ Update item (comments, ratings, etc.)
+async function updateImage(item) {
+  const { resource } = await container.item(item.id, item.id).replace(item);
+  return resource;
+}
+
+// ✅ Delete item by name (query first, then delete by ID)
+async function deleteImage(name) {
+  const query = {
+    query: "SELECT * FROM c WHERE c.name = @name",
+    parameters: [{ name: "@name", value: name }],
+  };
+
+  const { resources } = await container.items.query(query).fetchAll();
+  if (!resources.length) return;
+
+  const item = resources[0];
+  await container.item(item.id, item.id).delete();
+}
+
+module.exports = {
+  addImage,
+  listImages,
+  deleteImage,
+  getImageById,
+  updateImage,
+};
