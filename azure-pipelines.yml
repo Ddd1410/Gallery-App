@@ -17,18 +17,20 @@ stages:
         versionSpec: '18.x'
       displayName: 'Use Node.js 18'
 
-    # Install backend dependencies INSIDE the backend folder
+    # Install backend dependencies
     - script: |
         cd backend
         npm install --production
       displayName: 'Install backend dependencies'
 
+    # Build frontend
     - script: |
         cd frontend
         npm install
         npm run build
       displayName: 'Build frontend'
 
+    # Archive frontend
     - task: ArchiveFiles@2
       inputs:
         rootFolderOrFile: 'frontend/build'
@@ -37,7 +39,7 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
       displayName: 'Archive frontend build'
 
-    # Zip backend AFTER node_modules exists
+    # Archive backend AFTER install
     - task: ArchiveFiles@2
       inputs:
         rootFolderOrFile: 'backend'
@@ -46,6 +48,7 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
       displayName: 'Archive backend'
 
+    # Publish artifacts
     - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
