@@ -17,9 +17,10 @@ stages:
         versionSpec: '18.x'
       displayName: 'Use Node.js 18'
 
+    # Install backend dependencies INSIDE the backend folder
     - script: |
         cd backend
-        npm install
+        npm install --production
       displayName: 'Install backend dependencies'
 
     - script: |
@@ -36,6 +37,7 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
       displayName: 'Archive frontend build'
 
+    # Zip backend AFTER node_modules exists
     - task: ArchiveFiles@2
       inputs:
         rootFolderOrFile: 'backend'
@@ -64,8 +66,8 @@ stages:
 
           - task: AzureWebApp@1
             inputs:
-              azureSubscription: 'db2'   # ← your service connection name
-              appName: 'dbcw'                            # ← your backend App Service name
+              azureSubscription: 'db2'
+              appName: 'dbcw'
               appType: webAppLinux
               package: '$(Pipeline.Workspace)/drop/backend.zip'
             displayName: 'Deploy backend to App Service'
