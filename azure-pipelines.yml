@@ -1,52 +1,54 @@
-# File: azure-pipelines.yml
 trigger:
-  branches:
-    include:
-      - main
+  - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
+# Link your variable group
 variables:
-  # Azure App Service name
-  azureWebAppName: 'db'
-  # Resource group of the App Service
-  resourceGroup: 'db_group'
-  # Node.js version
-  nodeVersion: '20.x'
+- group: gallery-app-secrets
 
 steps:
-# 1. Checkout code
-- task: Checkout@1
+  # Install Node
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '18.x'
+    displayName: 'Use Node.js 18'
 
-# 2. Install Node.js
-- task: NodeTool@0
-  inputs:
-    versionSpec: '$(nodeVersion)'
-  displayName: 'Install Node.js'
+  # Install backend dependencies
+  - script: |
+      cd backend
+      npm install
+    displayName: 'Install backend dependencies'
 
-# 3. Install backend dependencies
-- script: |
-    cd backend
-    npm install
-  displayName: 'Install backend dependencies'
+  # Install frontend dependencies + build
+  - script: |
+      cd frontend
+      npm install
+      npm run build
+    displayName: 'Build frontend'
 
-# 4. Install frontend dependencies and build React
-- script: |
-    cd frontend
-    npm install
-    npm run build
-  displayName: 'Install frontend dependencies and build React'
+  # Archive frontend build output
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: 'frontend/build'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
+    displayName: 'Archive frontend build'
 
-# 5. Copy React build into backend wwwroot (for Azure App Service)
-- script: |
-    cp -r frontend/build/* backend/wwwroot/
-  displayName: 'Copy frontend build to backend'
+  # Archive backend
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: 'backend'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
+    displayName: 'Archive backend'
 
-# 6. Deploy backend (with frontend) to Azure App Service
-- task: AzureWebApp@1
-  inputs:
-    azureSubscription: '<YOUR-AZURE-SERVICE-CONNECTION>'
-    appName: '$(azureWebAppName)'
-    package: 'backend'
-  displayName: 'Deploy backend + frontend to Azure App Service'
+  # Publish artifacts
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'drop'
+    displayName: 'Publish artifacts'
