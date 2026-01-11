@@ -64,7 +64,7 @@ stages:
 
           - task: AzureWebApp@1
             inputs:
-              azureSubscription: 'AzureConnection-CW2'   # ← your service connection name
+              azureSubscription: 'db2'   # ← your service connection name
               appName: 'dbcw'                            # ← your backend App Service name
               appType: webAppLinux
               package: '$(Pipeline.Workspace)/drop/backend.zip'
