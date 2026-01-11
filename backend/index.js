@@ -21,7 +21,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const requireCreator = (req, res, next) => {
   const apiKey = req.headers["x-api-key"];
   console.log("Received API key:", apiKey); // debug
-  if (apiKey !== process.env.CREATOR_KEY) {
+  if (apiKey !== process.env.CREATOR_API_KEY) {
     return res.status(403).json({ error: "Creator access required" });
   }
   next();
