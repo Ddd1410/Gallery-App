@@ -1,11 +1,11 @@
 // cosmosServis.js
 const { CosmosClient } = require("@azure/cosmos");
 
-// ✅ Environment variables (must match Azure App Service)
+// ✅ Environment variables (must match Azure App Service and .env)
 const endpoint = process.env.COSMOS_DB_ENDPOINT;
 const key = process.env.COSMOS_DB_KEY;
-const databaseName = process.env.COSMOS_DB_DATABASE;
-const containerName = process.env.COSMOS_DB_CONTAINER;
+const databaseName = process.env.COSMOS_DB_NAME;          // FIXED
+const containerName = process.env.COSMOS_CONTAINER_NAME;  // FIXED
 
 // ✅ Debug logs to confirm values during deployment
 console.log("Cosmos DB Endpoint:", endpoint);
