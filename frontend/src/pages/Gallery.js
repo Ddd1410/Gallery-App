@@ -17,7 +17,7 @@ const Gallery = ({ role, apiKey, resetSignal }) => {
   // Fetch all images
   const fetchImages = async () => {
     try {
-      const res = await fetch(`${API_URL}/photos`);
+      const res = await fetch(`${API_URL}/api/photos`);
       const data = await res.json();
       setImages(data.images || []);
       setLoading(false);
@@ -80,7 +80,7 @@ const resetGallery = () => {
     if (!window.confirm("Are you sure you want to delete this image?")) return;
 
     try {
-      const res = await fetch(`${API_URL}/photos/${encodeURIComponent(name)}`, {
+      const res = await fetch(`${API_URL}/api/photos/${encodeURIComponent(name)}`, {
         method: "DELETE",
         headers: { "x-api-key": apiKey },
       });
@@ -105,7 +105,7 @@ const resetGallery = () => {
 
     setIsSubmittingComment(true);
     try {
-      const res = await fetch(`${API_URL}/photos/${selectedItem.id}/comment`, {
+      const res = await fetch(`${API_URL}/api/photos/${selectedItem.id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,7 +136,7 @@ const resetGallery = () => {
 
     setIsSubmittingRating(true);
     try {
-      const res = await fetch(`${API_URL}/photos/${selectedItem.id}/rate`, {
+      const res = await fetch(`${API_URL}/api/photos/${selectedItem.id}/rate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating }),
