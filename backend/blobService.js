@@ -1,4 +1,4 @@
-require("dotenv").config(); // Load .env at the top
+require("dotenv").config();
 const { BlobServiceClient } = require("@azure/storage-blob");
 
 // Read connection string from .env
@@ -13,30 +13,24 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(connectionStrin
 const containerName = "images";
 
 // Upload a file to Azure Blob
-async function uploadImage(file) {
+async function uploadFile(file) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  await containerClient.createIfNotExists();
 
-  const blobName = `${Date.now()}-${file.originalname}`;
-  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-  await blockBlobClient.uploadData(file.buffer);
+  const fileName = `${Date.now()}-${file.originalname}`;
+  const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+
+  await blockBlobClient.uploadData(file.buffer, {
+    blobHTTPHeaders: { blobContentType: file.mimetype },
+  });
 
   return blockBlobClient.url;
 }
 
-// List all images in container
-async function listImages() {
+// Delete a blob by name
+async function deleteImage(blobName) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  const blobs = [];
-  for await (const blob of containerClient.listBlobsFlat()) {
-    blobs.push({
-      name: blob.name,
-      url: `https://${process.env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${containerName}/${blob.name}`,
-      title: blob.metadata?.title || "",
-      caption: blob.metadata?.caption || "",
-    });
-  }
-  return blobs;
+  const blobClient = containerClient.getBlockBlobClient(blobName);
+  await blobClient.deleteIfExists();
 }
 
-module.exports = { uploadImage, listImages };
+module.exports = { uploadFile, deleteImage };
