@@ -7,41 +7,63 @@ pool:
 variables:
 - group: gallery-app-secrets
 
-steps:
-  - task: NodeTool@0
-    inputs:
-      versionSpec: '18.x'
-    displayName: 'Use Node.js 18'
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
+      displayName: 'Use Node.js 18'
 
-  - script: |
-      cd backend
-      npm install
-    displayName: 'Install backend dependencies'
+    - script: |
+        cd backend
+        npm install
+      displayName: 'Install backend dependencies'
 
-  - script: |
-      cd frontend
-      npm install
-      npm run build
-    displayName: 'Build frontend'
+    - script: |
+        cd frontend
+        npm install
+        npm run build
+      displayName: 'Build frontend'
 
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: 'frontend/build'
-      includeRootFolder: false
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
-    displayName: 'Archive frontend build'
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: 'frontend/build'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
+      displayName: 'Archive frontend build'
 
-  - task: ArchiveFiles@2
-    inputs:
-      rootFolderOrFile: 'backend'
-      includeRootFolder: false
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
-    displayName: 'Archive backend'
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: 'backend'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
+      displayName: 'Archive backend'
 
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'drop'
-    displayName: 'Publish artifacts'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+      displayName: 'Publish artifacts'
+
+- stage: DeployBackend
+  dependsOn: Build
+  jobs:
+  - deployment: DeployBackendJob
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              appName: 'dbcw'
+              package: '$(Pipeline.Workspace)/drop/backend.zip'
+            displayName: 'Deploy backend to App Service'
